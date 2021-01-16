@@ -1,3 +1,15 @@
+"""
+Multi-EPL: Accurate Multi-Source Domain Adaptation
+
+Authors:
+- Seongmin Lee (ligi214@snu.ac.kr)
+- Hyunsik Jeon (jeon185@gmail.com)
+- U Kang (ukang@snu.ac.kr)
+
+File: src/loader/dataloader.py
+- Contains source code for setting Digits-Five dataset and dataloader
+"""
+
 import numpy as np
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
@@ -18,6 +30,7 @@ digits_transform = transforms.Compose([transforms.ToPILImage(),
 
 
 class GeneralDataset(Dataset):
+    """ General dataset for Digits-Five """
     def __init__(self, images, labels, transform, target_train):
         super(GeneralDataset, self).__init__()
         self.images = images
@@ -41,21 +54,31 @@ class GeneralDataset(Dataset):
 
 
 def get_digits_dataloader(name='MNIST', target=False, transform=digits_transform, batch_size=64, data_num=-1, data_dir=digits_data_dir):
+    """
+    Get dataset and dataloader for a Digits-Five dataset
+    :param name: name of the dataset (one of MNIST, MNIST-M, SVHN, SYN, and USPS)
+    :param target: True if the requested dataset is target dataset
+    :param transform: how to transform images
+    :param batch_size: batch size for dataloader
+    :param data_num: the number of training data
+    :param data_dir: the directory where Digits-Five data are saved
+    :return: Training dataset, Training dataloader, Test dataset, Test dataloader for the requested dataset
+    """
     if name == 'MNIST':
         print('Load MNIST data')
-        train_data, test_data, train_label, test_label, data_per_label = load_mnist(data_dir, data_num)
+        train_data, test_data, train_label, test_label = load_mnist(data_dir, data_num)
     elif name == 'MNIST-M':
         print('Load MNIST-M data')
-        train_data, test_data, train_label, test_label, data_per_label = load_mnist_m(data_dir, data_num)
+        train_data, test_data, train_label, test_label = load_mnist_m(data_dir, data_num)
     elif name == 'SVHN':
         print('Load SVHN data')
-        train_data, test_data, train_label, test_label, data_per_label = load_svhn(data_dir, data_num)
+        train_data, test_data, train_label, test_label = load_svhn(data_dir, data_num)
     elif name == 'SYN':
         print('Load SYN data')
-        train_data, test_data, train_label, test_label, data_per_label = load_synthdigits(data_dir, data_num)
+        train_data, test_data, train_label, test_label = load_synthdigits(data_dir, data_num)
     elif name == 'USPS':
         print('Load USPS data')
-        train_data, test_data, train_label, test_label, data_per_label = load_usps(data_dir, data_num)
+        train_data, test_data, train_label, test_label = load_usps(data_dir, data_num)
     else:
         raise ValueError('Name should be one of MNIST, MNIST-M, SVHN, SYN, and USPS')
 

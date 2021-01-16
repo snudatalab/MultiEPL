@@ -1,7 +1,23 @@
+"""
+Multi-EPL: Accurate Multi-Source Domain Adaptation
+
+Authors:
+- Seongmin Lee (ligi214@snu.ac.kr)
+- Hyunsik Jeon (jeon185@gmail.com)
+- U Kang (ukang@snu.ac.kr)
+
+File: src/utils/default_param.py
+- Contains source code for the input arguments for each experiment
+"""
+
 import argparse
 
 
 def get_default_param_digits():
+    """
+    Receive arguments
+    :return: Argument parser
+    """
     parser = argparse.ArgumentParser()
 
     # Domain Adaptation Options for Digits-Five Dataset

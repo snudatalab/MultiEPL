@@ -1,3 +1,15 @@
+"""
+Multi-EPL: Accurate Multi-Source Domain Adaptation
+
+Authors:
+- Seongmin Lee (ligi214@snu.ac.kr)
+- Hyunsik Jeon (jeon185@gmail.com)
+- U Kang (ukang@snu.ac.kr)
+
+File: src/digits.py
+- Contains source code for the main code for the Digits-Five experiments
+"""
+
 import torch
 import numpy as np
 import random
@@ -32,12 +44,14 @@ def main(args):
         get_digits_dataloader(name=source[2], target=False, batch_size=batch_size, data_num=source_data_num, data_dir=data_dir)
     source_test_dataset_4, source_train_dataloader_4, source_test_dataset_4, source_test_dataloader_4 = \
         get_digits_dataloader(name=source[3], target=False, batch_size=batch_size, data_num=source_data_num, data_dir=data_dir)
-
     source_train_dataloader = [source_train_dataloader_1, source_train_dataloader_2, source_train_dataloader_3, source_train_dataloader_4]
     source_test_dataloader = [source_test_dataloader_1, source_test_dataloader_2, source_test_dataloader_3, source_test_dataloader_4]
+
+    # set solver for model training
     solver = SolverDigits(args, target, source, target_train_dataset, target_train_dataloader, target_test_dataloader,
                           source_train_dataloader, source_test_dataloader)
 
+    # Model training and test
     epochs = args.epochs
     max_acc = 0
     for e in range(1, epochs+1):

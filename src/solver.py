@@ -1,7 +1,18 @@
+"""
+Multi-EPL: Accurate Multi-Source Domain Adaptation
+
+Authors:
+- Seongmin Lee (ligi214@snu.ac.kr)
+- Hyunsik Jeon (jeon185@gmail.com)
+- U Kang (ukang@snu.ac.kr)
+
+File: src/solver.py
+- Contains source code for the solver for training of the Digits-Five experiments
+"""
+
 import time
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from network.network_digits import GeneratorDigits, LabelClassifierDigits
@@ -10,6 +21,18 @@ from network.network_digits import GeneratorDigits, LabelClassifierDigits
 class SolverDigits:
     def __init__(self, args, target, source, target_train_dataset, target_train_dataloader, target_test_dataloader,
                  source_train_dataloader, source_test_dataloader):
+        """
+        Initiate solver
+        :param args: input arguments
+        :param target: the name of the target dataset
+        :param source: the array with the names of the source datasets
+        :param target_train_dataset: target dataset
+        :param target_train_dataloader: target training dataloader
+        :param target_test_dataloader: target test dataloder
+        :param source_train_dataloader: source train dataloader
+        :param source_test_dataloader: source test dataloader
+        """
+
         # basic settings
         self.target = target
         self.source = source
@@ -75,6 +98,7 @@ class SolverDigits:
         self.lc_tot_scheduler = optim.lr_scheduler.ExponentialLR(optimizer=self.lc_tot_optimizer, gamma=0.96)
 
     def get_train_samples(self):
+        """ Return training samples from the target and source datasets """
         def get_sample(dataloader, dataloader_iter):
             try:
                 sample = next(dataloader_iter)
@@ -91,6 +115,16 @@ class SolverDigits:
         return t_sample, s1_sample, s2_sample, s3_sample, s4_sample
 
     def get_mm_loss(self, t_feat, s1_feat, s2_feat, s3_feat, s4_feat, order):
+        """
+        Return the moment matching loss of the given order
+        :param t_feat: target features
+        :param s1_feat: source features 1
+        :param s2_feat: source features 2
+        :param s3_feat: source features 3
+        :param s4_feat: source features 4
+        :param order: order of the moment
+        :return: moment matching loss in torch.tensor type
+        """
         def get_norm(x, y):
             try:
                 ans = torch.norm(x - y)
@@ -119,10 +153,11 @@ class SolverDigits:
         return loss
 
     def set_pseudolabels(self):
+        # set dataloader to evaluate pseudolabels of every data in the target training dataset
         t_train_dataloader = DataLoader(self.t_train_dataset, batch_size=self.batch_size, shuffle=False, drop_last=False, num_workers=0)
         softmax = nn.Softmax(dim=-1).to(self.device)
 
-        if self.ensemble_num == 1:
+        if self.ensemble_num == 1:  # no ensemble
             for sample in t_train_dataloader:
                 image = sample['image'].to(self.device)
                 indices = sample['index']
@@ -138,7 +173,7 @@ class SolverDigits:
                                      torch.tensor(-1, device=self.device))
                 ans = torch.clamp(prediction * accept, min=-1).long()
                 self.t_train_dataset.labels[indices] = ans.cpu()
-        elif self.ensemble_num == 2:
+        elif self.ensemble_num == 2:  # ensemble of two network pairs
             for sample in t_train_dataloader:
                 image = sample['image'].to(self.device)
                 indices = sample['index']
@@ -158,6 +193,16 @@ class SolverDigits:
                 self.t_train_dataset.labels[indices] = ans.cpu()
 
     def forward_G(self, t_img, s1_img, s2_img, s3_img, s4_img, index=1):
+        """
+        Return the target and source features using the feature extractor indicated as index
+        :param t_img: target image
+        :param s1_img: source image 1
+        :param s2_img: source image 2
+        :param s3_img: source image 3
+        :param s4_img: source image 4
+        :param index: index of the feature extractor
+        :return: target and source features
+        """
         if index == 1:
             generator = self.G1
         else:
@@ -170,6 +215,15 @@ class SolverDigits:
         return t_feat, s1_feat, s2_feat, s3_feat, s4_feat
 
     def forward_LC(self, s1_feat, s2_feat, s3_feat, s4_feat, index=1):
+        """
+        Return the prediction for the source features using the label classifier indicated as index
+        :param s1_feat: source feature 1
+        :param s2_feat: source feature 2
+        :param s3_feat: source feature 3
+        :param s4_feat: source feature 4
+        :param index: index of the label classifier
+        :return: source predictions
+        """
         if index == 1:
             label_classifier = self.LC1
         elif index == 2:
@@ -183,6 +237,7 @@ class SolverDigits:
         return s1_pred, s2_pred, s3_pred, s4_pred
 
     def loss_mm(self, t_feat, s1_feat, s2_feat, s3_feat, s4_feat, t_label, s1_label, s2_label, s3_label, s4_label):
+        """ Return 1st and 2nd order label-wise moment matching losses """
         loss_mm_1, loss_mm_2 = 0, 0
         for label in range(self.num_classes):
             t_indices = torch.where(t_label == label)
@@ -203,6 +258,7 @@ class SolverDigits:
 
     @staticmethod
     def loss_ce(s1_pred, s2_pred, s3_pred, s4_pred, s1_label, s2_label, s3_label, s4_label):
+        """ Return label classification loss """
         criterion = nn.CrossEntropyLoss()
         loss_ce_1 = criterion(s1_pred, s1_label)
         loss_ce_2 = criterion(s2_pred, s2_label)
@@ -211,14 +267,20 @@ class SolverDigits:
         loss_ce = (loss_ce_1 + loss_ce_2 + loss_ce_3 + loss_ce_4) / 4
         return loss_ce
 
+    def train_mode_(self, *networks):
+        for network in networks:
+            network.train()
+
+    def eval_mode_(self, *networks):
+        for network in networks:
+            network.eval()
+
     def train(self, epoch):
+        """ Manage the overall training """
+
         print('\n*** Start epoch {:03d} ***'.format(epoch))
 
-        self.G1.train()
-        self.G2.train()
-        self.LC1.train()
-        self.LC2.train()
-        self.LC_total.train()
+        self.train_mode_(self.G1, self.G2, self.LC1, self.LC2, self.LC_total)
 
         if self.ensemble_num == 1:
             self.MultiEPL_1_train(epoch)
@@ -231,17 +293,17 @@ class SolverDigits:
         self.lc2_scheduler.step()
         self.lc_tot_scheduler.step()
 
-        self.G1.eval()
-        self.G2.eval()
-        self.LC1.eval()
-        self.LC2.eval()
-        self.LC_total.eval()
+        self.eval_mode_(self.G1, self.G2, self.LC1, self.LC2, self.LC_total)
 
     def MultiEPL_1_train(self, epoch):
+        """ Training the model only with the label-wise moment matching """
+
         print('Epoch {:03d} --- MultiEPL-1 Start'.format(epoch))
         since = time.time()
         loss_mm_1, loss_mm_2, loss_ce = torch.tensor(0), torch.tensor(0), torch.tensor(0)
+
         for step in range(self.num_iter):
+            # set target and sample images and labels
             t_sample, s1_sample, s2_sample, s3_sample, s4_sample = self.get_train_samples()
 
             t_image = t_sample['image'].to(self.device)
@@ -256,19 +318,23 @@ class SolverDigits:
             s3_label = s3_sample['label'].to(self.device)
             s4_label = s4_sample['label'].to(self.device)
 
+            # get target and source features and source predictions
             t_feat, s1_feat, s2_feat, s3_feat, s4_feat = self.forward_G(t_image, s1_image, s2_image, s3_image, s4_image, 1)
             s1_pred, s2_pred, s3_pred, s4_pred = self.forward_LC(s1_feat, s2_feat, s3_feat, s4_feat, 1)
 
+            # evaluate moment matching and label classification loss
             loss_mm_1, loss_mm_2 = self.loss_mm(t_feat, s1_feat, s2_feat, s3_feat, s4_feat, t_label, s1_label, s2_label, s3_label, s4_label)
             loss_ce = self.loss_ce(s1_pred, s2_pred, s3_pred, s4_pred, s1_label, s2_label, s3_label, s4_label)
             loss = (loss_mm_1 + loss_mm_2) * self.g_loss_weight + loss_ce * self.lc_loss_weight
 
+            # model update
             self.G1.zero_grad()
             self.LC1.zero_grad()
             loss.backward()
             self.g1_optimizer.step()
             self.lc1_optimizer.step()
 
+            # set pseudolabels every pseudolabel_setting_interval iterations
             self.iter_cnt += 1
             if self.iter_cnt % self.pseudolabel_setting_interval == self.pseudolabel_setting_interval - 1:
                 self.set_pseudolabels()
@@ -278,10 +344,12 @@ class SolverDigits:
               .format(epoch, loss_mm_1.item(), loss_mm_2.item(), loss_ce.item(), duration // 60, duration % 60))
 
     def MultiEPL_2_train(self, epoch):
+        """ Training the model with the label-wise moment matching and ensemble learning """
         print('Epoch {:03d} --- MultiEPL-2 Start'.format(epoch))
         since = time.time()
         loss_mm_1, loss_mm_2, loss_ce, loss_extractor_cls = torch.tensor(0), torch.tensor(0), torch.tensor(0), torch.tensor(0)
         for step in range(self.num_iter):
+            # set target and sample images and labels
             t_sample, s1_sample, s2_sample, s3_sample, s4_sample = self.get_train_samples()
 
             t_image = t_sample['image'].to(self.device)
@@ -296,18 +364,20 @@ class SolverDigits:
             s3_label = s3_sample['label'].to(self.device)
             s4_label = s4_sample['label'].to(self.device)
 
+            # get target and source features
             t_feat_1, s1_feat_1, s2_feat_1, s3_feat_1, s4_feat_1 = self.forward_G(t_image, s1_image, s2_image, s3_image, s4_image, 1)
             t_feat_2, s1_feat_2, s2_feat_2, s3_feat_2, s4_feat_2 = self.forward_G(t_image, s1_image, s2_image, s3_image, s4_image, 2)
-
             s1_feat_tot = torch.cat([s1_feat_1, s1_feat_2], dim=1).detach()
             s2_feat_tot = torch.cat([s2_feat_1, s2_feat_2], dim=1).detach()
             s3_feat_tot = torch.cat([s3_feat_1, s3_feat_2], dim=1).detach()
             s4_feat_tot = torch.cat([s4_feat_1, s4_feat_2], dim=1).detach()
 
+            # get source predictions
             s1_pred_1, s2_pred_1, s3_pred_1, s4_pred_1 = self.forward_LC(s1_feat_1, s2_feat_1, s3_feat_1, s4_feat_1, 1)
             s1_pred_2, s2_pred_2, s3_pred_2, s4_pred_2 = self.forward_LC(s1_feat_2, s2_feat_2, s3_feat_2, s4_feat_2, 2)
             s1_pred_tot, s2_pred_tot, s3_pred_tot, s4_pred_tot = self.forward_LC(s1_feat_tot, s2_feat_tot, s3_feat_tot, s4_feat_tot, -1)
 
+            # evaluate moment matching and label classification loss
             loss_mm_1_1, loss_mm_2_1 = self.loss_mm(t_feat_1, s1_feat_1, s2_feat_1, s3_feat_1, s4_feat_1, t_label, s1_label, s2_label, s3_label, s4_label)
             loss_mm_1_2, loss_mm_2_2 = self.loss_mm(t_feat_2, s1_feat_2, s2_feat_2, s3_feat_2, s4_feat_2, t_label, s1_label, s2_label, s3_label, s4_label)
             loss_ce_1 = self.loss_ce(s1_pred_1, s2_pred_1, s3_pred_1, s4_pred_1, s1_label, s2_label, s3_label, s4_label)
@@ -319,6 +389,7 @@ class SolverDigits:
             loss_ce = loss_ce_1 + loss_ce_2 + loss_ce_tot
             loss = (loss_mm_1 + loss_mm_2) * self.g_loss_weight + loss_ce * self.lc_loss_weight
 
+            # model update
             self.G1.zero_grad()
             self.G2.zero_grad()
             self.LC1.zero_grad()
@@ -344,7 +415,7 @@ class SolverDigits:
         num_data = 0
         losses = 0
         criterion = nn.CrossEntropyLoss().to(self.device)
-        if self.ensemble_num == 1:
+        if self.ensemble_num == 1:  # without ensemble
             for i, sample in enumerate(self.t_test_dataloader):
                 image = sample['image'].to(self.device)
                 label = sample['label'].to(self.device)
@@ -359,7 +430,7 @@ class SolverDigits:
                 losses += loss.item()
                 num_data += image.size(0)
 
-        elif self.ensemble_num == 2:
+        elif self.ensemble_num == 2:  # with ensemble of two network pairs
             for i, sample in enumerate(self.t_test_dataloader):
                 image = sample['image'].to(self.device)
                 label = sample['label'].to(self.device)

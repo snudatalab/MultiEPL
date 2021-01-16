@@ -4,29 +4,26 @@ This package provides implementations of Multi-EPL, which is submitted at PLOS O
 
 ## Overview
 #### Code structure
-```shell
-Multi-EPL
+```
+MultiEPL
 ├── data
 │   └── digits: Digits-Five dataset
 ├── script
-│   └── digits.sh
+│   └── digits.sh: Shell file for Digits-Five experiments
 └── src
     ├── loader
-    │   ├── dataloader.py: generate dataloader and dataset of Digits-Five
-    │   └── digits
-    │       ├── mnist_m.py
-    │       ├── mnist.py
-    │       ├── svhn.py
-    │       ├── synthdigits.py
-    │       └── usps.py
-    ├── solver
-    │   ├── solver_digits_test.py: solver class for demo experiments
-    │   └── solver_digits.py: solver class for training
+    │   ├── digits: for Digits-Five dataset setting
+    │   │   ├── mnist.py
+    │   │   ├── mnist_m.py
+    │   │   ├── svhn.py
+    │   │   ├── synthdigits.py
+    │   │   └── usps.py
+    │   └── dataloader.py: generate dataloader and dataset of Digits-Five
     ├── utils
     │   └── default_param.py: set default parameters
     ├── network
     │   └── network_digits.py: network for Multi-EPL with Digits-Five dataset
-    ├── demo.py: coode for demo experiments
+    ├── solver.py: solver class for training
     └── digits.py: code for training Multi-EPL with Digits-Five dataset
 ```
 
@@ -42,13 +39,29 @@ Multi-EPL
 * Data source: https://github.com/VisionLearningGroup/VisionLearningGroup.github.io/tree/master/M3SDA/code_MSDA_digit 
   * Note that we are unrelated to the group providing the data.
 
-## Environment
+## Install
+#### Environment
+* Ubuntu
+* CUDA 10.0
+* Python 3.6.12
+* torch 1.7.1
+* torchvision 0.8.2
+* scipy 1.5.4
+
+To create an anaconda environment with  all the requirements:
 ``` shell
-conda env create -n NAME -f requirement.txt
+conda env create -n <ENV_NAME> -f requirement.txt
 ```
 
 ## How to use
 ``` shell
+git clone https://github.com/snudatalab/AUBER.git
 cd Multi-EPL/script/
-sh train.sh
+sh digits.sh
 ```
+
+## Contact us
+* Seongmin Lee (ligi214@snu.ac.kr)
+* Hyunsik Jeon (jeon185@gmail.com)
+* U Kang (ukang@snu.ac.kr)
+* Data Mining Lab at Seoul National University.

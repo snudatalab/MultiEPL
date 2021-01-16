@@ -1,7 +1,20 @@
+"""
+Multi-EPL: Accurate Multi-Source Domain Adaptation
+
+Authors:
+- Seongmin Lee (ligi214@snu.ac.kr)
+- Hyunsik Jeon (jeon185@gmail.com)
+- U Kang (ukang@snu.ac.kr)
+
+File: src/network/network_digits.py
+- Contains source code for the feature extractor and label classifier networks for Digits-Five
+"""
+
 import torch.nn as nn
 import torch.nn.functional as F
 
 
+# Feature extractor model for Digits-Five
 class GeneratorDigits(nn.Module):
     def __init__(self):
         super(GeneratorDigits, self).__init__()
@@ -28,6 +41,7 @@ class GeneratorDigits(nn.Module):
         return x
 
 
+# Label classifier model for Digits-Five
 class LabelClassifierDigits(nn.Module):
     def __init__(self, input_size=2048):
         super(LabelClassifierDigits, self).__init__()
@@ -35,20 +49,4 @@ class LabelClassifierDigits(nn.Module):
 
     def forward(self, x):
         x = self.fc3(x)
-        return x
-
-
-class DiscriminatorDigits(nn.Module):
-    def __init__(self, input_size=2048):
-        super(DiscriminatorDigits, self).__init__()
-        self.fc1 = nn.Linear(input_size, 3000)
-        self.fc2 = nn.Linear(3000, 2000)
-        self.fc3 = nn.Linear(2000, 1000)
-        self.fc4 = nn.Linear(1000, 1)
-
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = self.fc4(x)
         return x
