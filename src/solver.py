@@ -146,10 +146,7 @@ class SolverDigits:
         s3_feat_mean = get_mean(s3_feat, order)
         s4_feat_mean = get_mean(s4_feat, order)
         loss = get_norm(t_feat_mean, s1_feat_mean) + get_norm(t_feat_mean, s2_feat_mean) + \
-               get_norm(t_feat_mean, s3_feat_mean) + get_norm(t_feat_mean, s4_feat_mean) + \
-               get_norm(s1_feat_mean, s2_feat_mean) + get_norm(s1_feat_mean, s3_feat_mean) + \
-               get_norm(s1_feat_mean, s4_feat_mean) + get_norm(s2_feat_mean, s3_feat_mean) + \
-               get_norm(s2_feat_mean, s4_feat_mean) + get_norm(s3_feat_mean, s4_feat_mean)
+               get_norm(t_feat_mean, s3_feat_mean) + get_norm(t_feat_mean, s4_feat_mean) 
         return loss
 
     def set_pseudolabels(self):
