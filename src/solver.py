@@ -171,7 +171,8 @@ class SolverDigits:
 
                 accept = torch.where(confidence > self.conf_threshold, torch.tensor(1, device=self.device),
                                      torch.tensor(-1, device=self.device))
-                ans = torch.clamp(prediction * accept, min=-1).long()
+                prediction = prediction + 1
+                ans = torch.clamp(prediction * accept, min=0).long() - 1
                 self.t_train_dataset.labels[indices] = ans.cpu()
         elif self.ensemble_num == 2:  # ensemble of two network pairs
             for sample in t_train_dataloader:
@@ -189,7 +190,8 @@ class SolverDigits:
 
                 accept = torch.where(confidence > self.conf_threshold, torch.tensor(1, device=self.device),
                                      torch.tensor(-1, device=self.device))
-                ans = torch.clamp(prediction * accept, min=-1).long()
+                prediction = prediction + 1
+                ans = torch.clamp(prediction * accept, min=0).long() - 1
                 self.t_train_dataset.labels[indices] = ans.cpu()
 
     def forward_G(self, t_img, s1_img, s2_img, s3_img, s4_img, index=1):
