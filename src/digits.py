@@ -36,13 +36,13 @@ def main(args):
         get_digits_dataloader(name=target, target=True, batch_size=batch_size, data_num=target_data_num, data_dir=data_dir)
 
     # get source dataloader
-    source_test_dataset_1, source_train_dataloader_1, source_test_dataset_1, source_test_dataloader_1 = \
+    source_train_dataset_1, source_train_dataloader_1, source_test_dataset_1, source_test_dataloader_1 = \
         get_digits_dataloader(name=source[0], target=False, batch_size=batch_size, data_num=source_data_num, data_dir=data_dir)
-    source_test_dataset_2, source_train_dataloader_2, source_test_dataset_2, source_test_dataloader_2 = \
+    source_train_dataset_2, source_train_dataloader_2, source_test_dataset_2, source_test_dataloader_2 = \
         get_digits_dataloader(name=source[1], target=False, batch_size=batch_size, data_num=source_data_num, data_dir=data_dir)
-    source_test_dataset_3, source_train_dataloader_3, source_test_dataset_3, source_test_dataloader_3 = \
+    source_train_dataset_3, source_train_dataloader_3, source_test_dataset_3, source_test_dataloader_3 = \
         get_digits_dataloader(name=source[2], target=False, batch_size=batch_size, data_num=source_data_num, data_dir=data_dir)
-    source_test_dataset_4, source_train_dataloader_4, source_test_dataset_4, source_test_dataloader_4 = \
+    source_train_dataset_4, source_train_dataloader_4, source_test_dataset_4, source_test_dataloader_4 = \
         get_digits_dataloader(name=source[3], target=False, batch_size=batch_size, data_num=source_data_num, data_dir=data_dir)
     source_train_dataloader = [source_train_dataloader_1, source_train_dataloader_2, source_train_dataloader_3, source_train_dataloader_4]
     source_test_dataloader = [source_test_dataloader_1, source_test_dataloader_2, source_test_dataloader_3, source_test_dataloader_4]
