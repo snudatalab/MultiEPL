@@ -46,9 +46,6 @@ def get_default_param_digits():
                         help="the number of network pairs",
                         choices=[1, 2], type=int,
                         default=1)
-    parser.add_argument("--conf_threshold",
-                        help="threshold for pseudo-labels, range from 0 to 1",
-                        type=float, default=0.9)
     parser.add_argument("--pseudolabel_setting_interval",
                         help="pseudolabel setting interval",
                         type=float, default=10)

@@ -41,7 +41,6 @@ class SolverDigits:
         self.ensemble_num = args.ensemble_num
         self.num_iter = args.source_data_num // args.batch_size
         self.iter_cnt = 0
-        self.conf_threshold = args.conf_threshold  # for determining pseudo-labels
         self.pseudolabel_setting_interval = args.pseudolabel_setting_interval
 
         # dataloader setting
@@ -165,12 +164,7 @@ class SolverDigits:
                 logits = self.LC1(feat)[:num_image]
                 prob = softmax(logits)
                 confidence, prediction = prob.max(dim=-1)
-
-                accept = torch.where(confidence > self.conf_threshold, torch.tensor(1, device=self.device),
-                                     torch.tensor(-1, device=self.device))
-                prediction = prediction + 1
-                ans = torch.clamp(prediction * accept, min=0).long() - 1
-                self.t_train_dataset.labels[indices] = ans.cpu()
+                self.t_train_dataset.labels[indices] = prediction.cpu()
         elif self.ensemble_num == 2:  # ensemble of two network pairs
             for sample in t_train_dataloader:
                 image = sample['image'].to(self.device)
@@ -184,12 +178,7 @@ class SolverDigits:
                 logits = self.LC_total(feat)[:num_image]
                 prob = softmax(logits)
                 confidence, prediction = prob.max(dim=-1)
-
-                accept = torch.where(confidence > self.conf_threshold, torch.tensor(1, device=self.device),
-                                     torch.tensor(-1, device=self.device))
-                prediction = prediction + 1
-                ans = torch.clamp(prediction * accept, min=0).long() - 1
-                self.t_train_dataset.labels[indices] = ans.cpu()
+                self.t_train_dataset.labels[indices] = prediction.cpu()
 
     def forward_G(self, t_img, s1_img, s2_img, s3_img, s4_img, index=1):
         """
